@@ -6,22 +6,27 @@ import React, { useState, useEffect } from "react";
 
 import { createSocket } from '../utils/signalr-connector';
 
-const SOCKET_URL = new URL('http://localhost:5000');
+const SOCKET_URL = new URL('http://localhost:5000/hub');
 
 const socket = createSocket(SOCKET_URL);
 
 
 export const Board = () => {
+  console.log("rerender");
   const [game, setGame] = useState<Game>({
-    board: Array(9).fill(""),
+    board: Array(9).fill(''),
     currentPlayer: "X",
   });
+  console.log(JSON.stringify(game))
   const [errorMessage, setErrorMessage] = useState("");
   const [playerTurn, setPlayerTurn] = useState("Player A");
 
   useEffect(() => {
+  
     socket.on("moveMade", (data) => {
-      setGame(data.updateGame);
+      console.log("setGame")
+      console.log("updatedGame", data.updatedGame)
+      setGame(data.updatedGame);
       setPlayerTurn(data.updatedGame.currentPlayer);
       setErrorMessage("");
     });
@@ -32,19 +37,19 @@ export const Board = () => {
       setErrorMessage("");
     });
 
-    socket.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error.message);
-    });
+    // socket.on("connect_error", (error) => {
+    //   console.error("WebSocket connection error:", error.message);
+    // });
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected from server");
-    });
+    // socket.on("disconnect", () => {
+    //   console.log("Disconnected from server");
+    // });
 
     return () => {
       socket.off("moveMade");
       socket.off("gameReset");
-      socket.off("connect_error");
-      socket.off("disconnect");
+      // socket.off("connect_error");
+      // socket.off("disconnect");
     };
   }, []);
 
@@ -62,8 +67,8 @@ export const Board = () => {
 
     for (let i = 0; i < lines.length; i++) {
       const [a, b, c] = lines[i];
-      if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-        return squares[a];
+      if (squares?.[a] && squares?.[a] === squares?.[b] && squares?.[a] === squares?.[c]) {
+        return squares?.[a];
       }
     }
 
@@ -71,7 +76,9 @@ export const Board = () => {
   };
 
   const makeMove = (index: number) => {
+    console.log({index});
     const squares = [...game.board];
+    console.log({squares})
 
     if (calculateWinner(squares) || squares[index]) {
       setErrorMessage("Invalid move. Please try again.");
@@ -86,12 +93,14 @@ export const Board = () => {
       currentPlayer: game.currentPlayer === "X" ? "O" : "X",
     };
 
+    console.log({updatedGame})
+
     socket.emit("makeMove", { index, updatedGame });
   };
 
   const resetGame = () => {
     const newGame = {
-      board: Array(9).fill(""),
+      board: Array(9).fill(null),
       currentPlayer: "X",
     };
 
@@ -102,13 +111,12 @@ export const Board = () => {
 
   return (
     <div className="text-center">
-      <h1>Welcome to Tic Tac Toe Game</h1>
       <div>
-        <div className=" grid grid-cols-3 gap-[10px] mt-[20px] ml-[65px]">
+        <div className="grid grid-cols-3 gap-[10px] mt-[20px] ml-[65px]">
           {game.board.map((cell, index) => (
             <div
               key={index}
-              className={`w-[100px] h-[100px] border-2 border-[#333] font-[2em] flex items-center justify-center cursor-pointer bg-[#fff] transition-colors duration-300 ${winner && winner === cell ? "bg-green-500 font-white" : ""}`}
+              className={`text-black w-[100px] h-[100px] border-2 border-[#333] text-[20px] flex items-center justify-center cursor-pointer bg-[#fff] transition-colors duration-300 ${winner && winner === cell ? "bg-green-500 font-white" : ""}`}
               onClick={() => makeMove(index)}
             >
               {cell}

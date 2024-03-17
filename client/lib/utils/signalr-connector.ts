@@ -11,10 +11,10 @@ class Connector {
       .withUrl(this.URL)
       .withAutomaticReconnect()
       .build();
+    this.connection.start().catch((err) => document.write(err));
   }
 
   public on = (channel: string, callback: (data: any) => void) => {
-    this.connection.start().catch((err) => document.write(err));
     this.connection.on(channel, (data: any) => {
       callback(data);
     });
